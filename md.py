@@ -12,8 +12,11 @@ threshold = 1500
 #video capture 
 cam = cv.VideoCapture(0)
 
+#camL = cv.VideoCapture(1)
+
 #history, threshold, DetectShadows, based on location
 fgbg = cv.createBackgroundSubtractorMOG2(300, 400, True)
+#fgbgL = cv.createBackgroundSubtractorMOG2(300, 400, True)
 
 port = "/dev/ttyACM0"
 rate = 115200
@@ -31,19 +34,33 @@ while True:
 try:
     while(True):
         ret, frame = cam.read()
+	#retL, frameL = camL.read()
+
         resizedFrame = cv.resize(frame, (0, 0), fx=0.5, fy=0.5)
         fgmask = fgbg.apply(resizedFrame)
 
+        #resizedFrameL = cv.resize(frameL, (0, 0), fx=0.5, fy=0.5)
+        #fgmaskL = fgbgL.apply(resizedFrame)
+
         #Count all the non zero pixels within the mask
         count = np.count_nonzero(fgmask)
+        #countL = np.count_nonzero(fgmaskL)
 
         #whats the serial issue cropping up here?
         if (count > threshold):
+        #if ((count > threshold) and (countL > threshold)):
             print('detection! moving')
             #'C' turns on both flags
             ser.write('C')
             time.sleep(0.1)
-
+        #elif (count > threshold):
+            #right flag
+            #ser.write('B')
+            #time.sleep(0.1)
+        #elif (countL > threshold):
+            #left flag
+            #ser.write('A')
+            #time.sleep(0.1)
         else:
             #stops the motors
             ser.write('S')
@@ -51,12 +68,14 @@ try:
 
         #In GUI shows the image or the difference
         #cv.imshow('Frame', resizedFrame)
-        #cv.imshow('Mask', fgmask)
+        cv.imshow('Mask', fgmask)
+        cv.imshow('LMask', fgmaskL)
 
 except:
     #error handling and closing ports/camera
     traceback.print_exc()
     cam.release()
+    #camL.release()
     ser.write('X')
     ser.close()
     now = datetime.datetime.now()
